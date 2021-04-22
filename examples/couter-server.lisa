@@ -1,0 +1,34 @@
+(import! ../lisa-http)
+
+(define (make-counter init)
+  (define-mutable! init)
+  (define (self)
+    (set! init (+ init 1))
+    init)
+  (define (self 'peek) init)
+  (define (self 'set n) (set! init n))
+  (define (self 'to-string) $"Counter($init)")
+  self)
+
+(define counters (mutable-record))
+(define counter-routes
+  (make-routes!
+    ("/" "Hello")
+    ($"/counter/get/$name"
+      (define counter (get counters name &0))
+      (record
+        'result (counter 'peek)
+        'exist (record-contains? counters name)))
+    (post $"/counter/inc/$name"
+      (if (not (record-contains? counters name))
+        (record-update! counters name (make-counter 0)))
+      (define counter (get counters name))
+      (record
+        'result (counter)))))
+
+(->> (make-server)
+  (bind-port 5050)
+  (set-router (make-router counter-routes))
+  (start-server)
+  &(input "Enter to stop>")
+  (stop-server))

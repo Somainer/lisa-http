@@ -1,0 +1,43 @@
+(import! helpers/pipe-macro)
+(import! helpers/match)
+(import! response-handler)
+
+(define (redirect-to path)
+  (lambda (context)
+    (->> context
+      (|>
+        .getResponseHeaders
+        (.add "Location" path))
+      (.sendResponseHeaders 301 (.asLong (wrap -1)))
+      .close)))
+
+(define (err code message)
+  `'((:err ~code) ~message))
+(define (bad-request message)
+  (err 400 message))
+
+(define (ok result)
+  (list :ok result))
+
+(define (response-file path context (when (string? path)))
+  (response-file (new java.io.File path) context))
+(define (response-file file context)
+  (define path (.toPath file))
+  (match file
+    (file (when (and (.isFile file) (.canRead file)))
+      (define content-type (java.nio.file.Files/probeContentType path))
+      (define size (.length file))
+      (->> context
+        (|>
+          .getResponseHeaders
+          (.add "Content-Type" content-type))
+        (.sendResponseHeaders 200 (.asLong (wrap size)))
+        (|>
+          .getResponseBody
+          &(java.nio.file.Files/copy path #))
+        .close))
+    (_ (write-response context "404 Not Found" 404))))
+
+(define (send-file path)
+  (lambda (context)
+    (response-file path context)))

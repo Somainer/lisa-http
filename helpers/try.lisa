@@ -1,0 +1,15 @@
+(define try-macro (require "Try.scala"))
+
+(define-macro (try! op 'catch ex)
+  `'(~try-macro ~op (lambda (_) ~ex) ()))
+(define-macro (try! op 'catch ex 'finally finale)
+  `'(~try-macro ~op (lambda (_) ~ex) ~finale))
+(define-macro (try! op 'finally finale)
+  `'(~try-macro ~op (lambda (_) ()) ~finale))
+
+(define-macro (try! op ('catch e ex))
+  `'(~try-macro ~op (lambda (~e) ~ex) ()))
+(define-macro (try! op ('catch e ex) 'finally finale)
+  `'(~try-macro ~op (lambda (~e) ~ex) ~finale))
+(define-macro (try! op 'finally finale)
+  `'(~try-macro ~op (lambda (_) ()) ~finale))

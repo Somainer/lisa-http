@@ -1,0 +1,22 @@
+(define-macro (lambda* ...cases)
+  (define sym (gen-sym))
+  `'(let ()
+      ~...(map cases &`'(define ~sym (lambda ~...#)))
+      ~sym))
+
+(define-macro (|> x ...fns)
+  (.foldLeft fns x
+    (lambda*
+      ((x (fn ...args) (when (not (= fn 'lambda))))
+        `'(~fn ~x ~...args))
+      ((x fn) `'(~fn ~x)))))
+
+(define-macro (->> obj ...ops)
+  (define sym (gen-sym))
+  (define (handle (fn ...args) (when (not (= fn 'lambda))))
+    `'(~fn ~sym ~...args))
+  (define (handle fn)
+    `'(~fn ~sym))
+  `'(let ((~sym ~obj))
+    ~...(map ops handle)
+    ~sym))

@@ -1,0 +1,11 @@
+(import! ../lisa-http)
+
+(define file-routes
+  (static-file-route **PATH** "/lisa"))
+
+(->> (make-server)
+  (bind-port 5050)
+  (set-router (make-router file-routes))
+  (start-server)
+  &(input "Enter to stop>")
+  (stop-server))

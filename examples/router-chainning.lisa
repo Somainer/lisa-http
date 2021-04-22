@@ -1,0 +1,16 @@
+(import! ../lisa-http)
+
+(define route1
+  (make-routes!
+    ("/dude" "Dude!")
+    (get "/get" "GET!")))
+(define route2
+  (make-routes!
+    (post "/get" (bad-request "Why post on get?"))
+    (post "/post" "That's right.")))
+
+(->> (make-server)
+  (bind-port 5050)
+  (set-router
+    (make-router (chain-routes route1 route2)))
+  (start-server))

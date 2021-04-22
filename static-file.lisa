@@ -1,0 +1,27 @@
+(import! router)
+(import! response-maker)
+(import! helpers/assertion)
+(import! helpers/match)
+
+(define (path-of path)
+  (.toPath (new java.io.File path)))
+
+(define (static-file-route dir prefix)
+  (define file (.getAbsoluteFile (new java.io.File dir)))
+  (assert (.isDirectory file) "Dir must be a directory.")
+  (assert (.startsWith prefix "/") "Prefix must starts with /")
+  (define prefix
+    (match prefix
+      ($"$p/" prefix)
+      (p $"$p/")))
+  (define path (.toPath file))
+  (define idx (length prefix))
+  (define (handle route context (when (.startsWith route prefix)))
+    (define fpath (.substring route idx))
+    (define file-path (.resolve path (path-of fpath)))
+    (define resolved-file (.toFile file-path))
+    (if (.isFile resolved-file)
+      (send-file resolved-file)
+      '(:ignore)))
+  (define (handle _ _) '(:ignore))
+  handle)

@@ -1,0 +1,9 @@
+(import-env! system)
+(define (assert true _) ())
+(define (assert false reason)
+    (throw (new AssertionError reason)))
+(define (assert c) (assert c "AssertioError"))
+
+(define-macro (assert! expr)
+    (define code (write expr))
+    `'(~assert ~expr $"Assertion failed: ${ ~code }"))

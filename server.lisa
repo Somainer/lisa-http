@@ -1,0 +1,13 @@
+(import-env! io-source)
+
+(define (make-server)
+  com.sun.net.httpserver.HttpServer/create)
+
+(define (bind-port server port)
+  (define addr (new java.net.InetSocketAddress port))
+  (.bind server addr 0)
+  server)
+
+(define start-server .start)
+(define (stop-server server)
+  (.stop server 0))

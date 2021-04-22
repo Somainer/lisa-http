@@ -1,0 +1,20 @@
+(import! helpers/pipe-macro)
+
+(define (write-response ctx res response-code)
+  (define res (string res))
+  (|> ctx
+    .getResponseHeaders
+    (.add "Server" "Lisa"))
+  (.sendResponseHeaders ctx response-code (.asLong (wrap (length res))))
+  (define body (.getResponseBody ctx))
+  (define writer (new java.io.PrintStream body))
+  (.print writer res)
+  (.close body))
+(define (write-response ctx res)
+  (write-response ctx res 200))
+
+(define (has-response? ctx)
+  (not (= (.getResponseCode ctx) -1)))
+
+(define (make-handler handler)
+  (new com.sun.net.httpserver.HttpHandler handler))
