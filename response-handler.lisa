@@ -1,10 +1,12 @@
 (import! helpers/pipe-macro)
 
+(define (write-common-headers ctx)
+  (->> (.getResponseHeaders ctx)
+    (.add "Server" "Lisa-Http")))
+
 (define (write-response ctx res response-code)
   (define res (string res))
-  (|> ctx
-    .getResponseHeaders
-    (.add "Server" "Lisa"))
+  (write-common-headers ctx)
   (.sendResponseHeaders ctx response-code (.asLong (wrap (length res))))
   (define body (.getResponseBody ctx))
   (define writer (new java.io.PrintStream body))

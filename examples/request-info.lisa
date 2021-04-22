@@ -1,0 +1,20 @@
+(import! ../lisa-http)
+
+(define routes
+  (make-routes!
+    (post "/json"
+      (record
+        'json (request-json!)))
+    (path
+      (record
+        'method (.getRequestMethod context)
+        'parameters (request-parameters!)
+        'path path))))
+
+(->> (make-server)
+  (bind-port 5050)
+  (set-router
+    (make-router routes))
+  (start-server)
+  &(input "Enter to stop>")
+  (stop-server))

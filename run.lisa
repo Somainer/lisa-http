@@ -1,0 +1,31 @@
+(define (main ("static" ...args))
+  (import! lisa-http)
+  (define path (.getAbsoluteFile (new java.io.File ".")))
+  (define route (static-file-route (.getPath path) "/"))
+  (define index
+    (make-routes!
+      ("/" (route "/index.html" context))))
+  (->> (make-server)
+    (set-router (make-router (chain-routes index route)))
+    (bind-port
+      (match args
+        ((port) (int port))
+        (_ 5050)))
+    (start-server)
+    &(input $"Serving static files in ${(.getPath path)}, enter to quit>")
+    (stop-server)))
+
+(define (main (path ...args))
+  (import! lisa-http)
+  (define system/arguments args)
+  (println! $"Loading scripts in $path, with arguments $args.")
+  (define file (.getAbsoluteFile (new java.io.File path)))
+  (if (not (.isFile file))
+    (panic! $"$file is not a file."))
+  (load! (.getPath file)))
+
+(define (main _)
+  (println! "No script, exiting..."))
+
+(if (value-exists? "system/arguments")
+  (main system/arguments))

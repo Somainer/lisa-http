@@ -50,7 +50,8 @@
   (define (handle-route (path ...actions))
     `'(lambda (~path context) ~...actions))
   
-  (define sym (gen-sym))
+  ; (define sym (gen-sym))
+  (define sym 'self)
   `'(let ()
       ~...(map routes 
         (lambda (route)

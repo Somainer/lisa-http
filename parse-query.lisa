@@ -1,0 +1,26 @@
+(import! helpers/pipe-macro)
+(import! helpers/match)
+
+(define (parse-query "") (record))
+(define (parse-query query)
+  (|> query
+    (.split "&")
+    (map &(.split # "="))
+    (.foldLeft (record)
+      (lambda (rec (key value))
+        (define new-value
+          (match (get rec key)
+            (() value)
+            (v (when (list? v)) (cons value v))
+            (v (list value v))))
+        (record-updated rec key new-value)))))
+
+(define (get-query-from-context context)
+  (|> context
+    .getRequestURI
+    .getQuery
+    &(if (= # null) "" #)
+    parse-query))
+
+(define-macro (request-parameters!)
+  `'(~get-query-from-context context))

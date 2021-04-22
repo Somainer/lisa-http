@@ -2,14 +2,19 @@
 (import! helpers/match)
 (import! response-handler)
 
-(define (redirect-to path)
+(define (redirect-to path code)
   (lambda (context)
     (->> context
+      write-common-headers
       (|>
         .getResponseHeaders
         (.add "Location" path))
-      (.sendResponseHeaders 301 (.asLong (wrap -1)))
+      (.sendResponseHeaders code (.asLong (wrap -1)))
       .close)))
+(define (redirect-to path)
+  (redirect-to path :permanent))
+(define (redirect-to path :permanent) (redirect-to path 301))
+(define (redirect-to path :found) (redirect-to path 302))
 
 (define (err code message)
   `'((:err ~code) ~message))
@@ -28,9 +33,10 @@
       (define content-type (java.nio.file.Files/probeContentType path))
       (define size (.length file))
       (->> context
+        write-common-headers
         (|>
           .getResponseHeaders
-          (.add "Content-Type" content-type))
+          (.add "Content-Type" (if (= content-type null) "" content-type)))
         (.sendResponseHeaders 200 (.asLong (wrap size)))
         (|>
           .getResponseBody
