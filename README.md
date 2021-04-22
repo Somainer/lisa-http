@@ -1,6 +1,7 @@
 # Lisa-HTTP
 
 A tiny web framework written in [lisa-language](https://github.com/Somainer/lisa-lang).
+Though this repo is marked as `Scheme`, this repo is **not** written in `Scheme`.
 
 ## A Simple Example
 ```scheme
