@@ -8,6 +8,13 @@
   (.bind server addr 0)
   server)
 
+(define (serve-threaded server)
+  (.setExecutor server java.util.concurrent.Executors/newCachedThreadPool)
+  server)
+(define (serve-threaded server max-thread)
+  (.setExecutor server (java.util.concurrent.Executors/newFixedThreadPool max-thread))
+  server)
+
 (define start-server .start)
 (define (stop-server server)
   (.stop server 0))

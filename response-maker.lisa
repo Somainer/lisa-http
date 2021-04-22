@@ -1,5 +1,6 @@
 (import! helpers/pipe-macro)
 (import! helpers/match)
+(import! helpers/try)
 (import! response-handler)
 
 (define (redirect-to path code)
@@ -24,6 +25,43 @@
 (define (ok result)
   (list :ok result))
 
+(define (get-range-header context)
+  (|> context
+    .getRequestHeaders
+    (.get "Range")
+    &(if (= # null) null (.get # 0))))
+(define (parse-range-header header file-size)
+  (define (parse $"bytes=$start-") (list (int start) file-size))
+  (define (parse $"bytes=$start-$end")
+    (list (int start) (+ (int end) 1)))
+  (define (parse $"bytes=-$suffix") (list (- file-size (int suffix)) file-size))
+  (define (parse _) ())
+  (if (= header null) ()
+    (parse header)))
+
+(define (-send-full-file context size path)
+  (->> context
+    (.sendResponseHeaders 200 (.asLong (wrap size)))
+    (|>
+      .getResponseBody
+      &(java.nio.file.Files/copy path #))
+    .close))
+(define make-range-stream (require "helpers/RangeInputStream.scala"))
+(define (-send-partial-file context size file (from to))
+  (define range-stream (make-range-stream (new java.io.FileInputStream file) from to))
+  (define (transfer-stream target)
+    (try! (.transferTo range-stream target)
+      finally (.close range-stream)))
+  (->> context
+    (|>
+      .getResponseHeaders
+      (.add "Content-Range" $"bytes $from-$to/$size"))
+    (.sendResponseHeaders 206 (.asLong (wrap (- to from))))
+    (|>
+      .getResponseBody
+      transfer-stream)
+    .close))
+
 (define (response-file path context (when (string? path)))
   (response-file (new java.io.File path) context))
 (define (response-file file context)
@@ -32,16 +70,20 @@
     (file (when (and (.isFile file) (.canRead file)))
       (define content-type (java.nio.file.Files/probeContentType path))
       (define size (.length file))
+      (define file-range
+        (|> context
+          get-range-header
+          (parse-range-header size)))
+      
       (->> context
         write-common-headers
         (|>
           .getResponseHeaders
-          (.add "Content-Type" (if (= content-type null) "" content-type)))
-        (.sendResponseHeaders 200 (.asLong (wrap size)))
-        (|>
-          .getResponseBody
-          &(java.nio.file.Files/copy path #))
-        .close))
+          (.add "Content-Type" (if (= content-type null) "" content-type))))
+      (if (nil? file-range)
+        (-send-full-file context size path)
+        (-send-partial-file context size file file-range)))
+
     (_ (write-response context "404 Not Found" 404))))
 
 (define (send-file path)

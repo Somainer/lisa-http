@@ -11,6 +11,7 @@
       (match args
         ((port) (int port))
         (_ 5050)))
+    (serve-threaded)
     (start-server)
     &(input $"Serving static files in ${(.getPath path)}, enter to quit>")
     (stop-server)))
