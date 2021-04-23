@@ -20,6 +20,12 @@
     &(input $"Serving static files in ${(.getPath path)} on port $port, enter to quit>")
     (stop-server)))
 
+(define (main ("terminal"))
+  (import! lisa-http)
+  (define env (.capturedEnv &#))
+  (define driver (new moe.roselia.lisa.Repl.ReplDriver System/in System/out System/err))
+  (.runUntilQuit driver env))
+
 (define (main (path ...args))
   (import! lisa-http)
   (define system/arguments args)
