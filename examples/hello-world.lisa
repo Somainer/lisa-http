@@ -1,7 +1,13 @@
 (import! ../lisa-http)
 
-(->> (make-server)
-  (bind-port 5050)
-  (set-router
-    (make-router (make-routes! ("/" "Hello, world!"))))
-  (start-server))
+; (->> (make-server)
+;   (bind-port 5050)
+;   (set-router
+;     (make-router (make-routes! ("/" "Hello, world!"))))
+;   (start-server))
+
+(lisa-http/run
+  :port 5000
+  :route
+    (make-routes!
+      ("/" "Hello, world!")))

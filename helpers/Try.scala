@@ -3,7 +3,7 @@ import moe.roselia.lisa.Evaluator
 
 def handleOrThrow(value: Evaluator.EvalResult) = value match {
   case Evaluator.EvalSuccess(exp, env) => exp -> env
-  case Evaluator.EvalFailureMessage(msg) => throw new RuntimeException(msg)
+  case _ => throw new RuntimeException(value.toString)
 }
 
 PrimitiveMacro {

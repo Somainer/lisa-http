@@ -9,8 +9,15 @@
     (post "/get" (bad-request "Why post on get?"))
     (post "/post" "That's right.")))
 
-(->> (make-server)
-  (bind-port 5050)
-  (set-router
-    (make-router (chain-routes route1 route2)))
-  (start-server))
+(lisa-http/run
+  :port 5050
+  :route route1
+  :route route2)
+
+; Equivalent to:
+;
+; (->> (make-server)
+;   (bind-port 5050)
+;   (set-router
+;     (make-router (chain-routes route1 route2)))
+;   (start-server))

@@ -4,7 +4,7 @@
 (import! response-handler)
 (import-env! io-source)
 
-(define (make-router router)
+(define (make-router route-fn)
   (define (handle-body-transform body)
     (match body
       (json (when (or (record? json) (list? json)))
@@ -20,15 +20,17 @@
       (fn (when (callable? fn)) (fn context))
       (data ; assume ok.
         (write-response context (handle-body-transform data)))))
-  (lambda (context)
+  (define (router context (when (has-response? context))) ())
+  (define (router context)
     (define path (|> context .getRequestURI .getPath))
-    ; (println! $"Path: $path resp: ${(router path context)}")
+    ; (println! $"Path: $path resp: ${(route-fn path context)}")
     (try!
-      (handle-response (router path context) context)
+      (handle-response (route-fn path context) context)
       (catch exception
         (handle-response (list :err (.getMessage exception)) context)))
     (if (not (has-response? context))
-      (write-response context "404 Not Found" 404))))
+      (write-response context "404 Not Found" 404)))
+  router)
 
 (define-macro (make-routes! ...routes)
   (define (is-http-method? meth)
@@ -60,6 +62,7 @@
       (define (~sym _ _) '(:ignore))
       ~sym))
 
+(define (chain-routes route) route)
 (define (chain-routes route-a route-b)
   (lambda (route context)
     (match (route-a route context)

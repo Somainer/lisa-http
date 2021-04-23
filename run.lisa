@@ -2,18 +2,22 @@
   (import! lisa-http)
   (define path (.getAbsoluteFile (new java.io.File ".")))
   (define route (static-file-route (.getPath path) "/"))
+  (define port
+    (match args
+        ((port) (int port))
+        (_ 5050)))
   (define index
     (make-routes!
       ("/" (route "/index.html" context))))
-  (->> (make-server)
-    (set-router (make-router (chain-routes index route)))
-    (bind-port
-      (match args
-        ((port) (int port))
-        (_ 5050)))
-    (serve-threaded)
+  (define server
+    (lisa-http
+      :route index
+      :route route
+      :port port
+      :threaded true))
+  (->> server
     (start-server)
-    &(input $"Serving static files in ${(.getPath path)}, enter to quit>")
+    &(input $"Serving static files in ${(.getPath path)} on port $port, enter to quit>")
     (stop-server)))
 
 (define (main (path ...args))

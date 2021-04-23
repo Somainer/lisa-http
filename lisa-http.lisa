@@ -5,3 +5,37 @@
 (import! static-file)
 (import! parse-query)
 (import! body-reader)
+
+(define (lisa-http ...confs)
+  (define server (make-server))
+  (define (loop routes (:port port ...confs))
+    (bind-port server port)
+    (loop routes confs))
+  (define (loop routes (:route route ...confs))
+    (loop (list ...routes route) confs))
+  (define (loop routes (:router router ...confs))
+    (set-router server router)
+    (loop routes confs))
+  (define (loop routes (:threaded thread ...confs))
+    (match thread
+      (true (serve-threaded server))
+      (false (.setExecutor server null))
+      (num (when (number? num)) (serve-threaded server num))
+      (_ (panic! $"Can not recognize threaded parameter: $thread")))
+    (loop routes confs))
+  (define (loop routes (:static dir prefix ...confs))
+    (loop routes (list :route (static-file-route dir prefix) ...confs)))
+  (define (loop () ()) server)
+  (define (loop routes ())
+    (define router (make-router (chain-routes ...routes)))
+    (loop () (list :router router)))
+  
+  (loop () confs))
+
+(define (lisa-http/run ...confs)
+  (->> (lisa-http ...confs)
+    (start-server)
+    (|>
+      .getAddress
+      .getPort
+      &(input $"Lisa-Http is running on port ${#}, enter to stop..."))))
