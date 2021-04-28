@@ -1,0 +1,6 @@
+(define UTF_8 java.nio.charset.StandardCharsets/UTF_8)
+(define (encode-url url)
+  (java.net.URLEncoder/encode url UTF_8))
+
+(define (decode-url url)
+  (java.net.URLDecoder/decode url UTF_8))

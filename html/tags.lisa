@@ -1,0 +1,30 @@
+(import! tag-maker)
+(define-macro (define-html tag) 
+  `'(define ~tag (html-maker ~(string tag))))
+
+(define-macro (html-tags! ...tags)
+  `'(group!
+  ~...(map tags &`'(define-html ~#))))
+
+(html-tags!
+  a abbr address area article aside audio
+  b base bdi bdo blockquote body br button
+  canvas cation cite code col colgroup
+  data datalist dd del details dfn dialog div dl dt
+  em embed
+  fieldset figcation figure footer form
+  h1 h2 h3 h4 h5 h6
+  head header
+  hr html
+  i iframe img
+  input ins
+  kbd
+  label legend li link
+  main map mark meta meter
+  nav noscript
+  object ol optgroup option output
+  p param picture pre progress q rp rt s
+  samp script section select small source span strong
+  style sub summary sup svg table tbody td td
+  template tfoot th thead time title tr track u ul
+  var video wbr)

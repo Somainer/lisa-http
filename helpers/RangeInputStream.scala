@@ -1,4 +1,5 @@
-import java.io.InputStream
+import java.io.{InputStream, ByteArrayInputStream}
+import java.nio.charset.StandardCharsets
 import moe.roselia.lisa.LispExp._
 import moe.roselia.lisa.Annotation.RawLisa
 
@@ -34,4 +35,7 @@ class RangeInputStream(stream: InputStream, from: Long, to: Long) extends InputS
 PrimitiveFunction {
   case WrappedScalaObject(stream: InputStream) :: SInteger(from) :: SInteger(to) :: Nil =>
     WrappedScalaObject(new RangeInputStream(stream, from.toLong, to.toLong))
+  case SString(str) :: Nil =>
+    val buf = StandardCharsets.UTF_8.encode(str)
+    WrappedScalaObject(new ByteArrayInputStream(buf.array()))
 }

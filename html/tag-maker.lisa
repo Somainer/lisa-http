@@ -1,0 +1,30 @@
+(define-record HtmlElement tag attributes children)
+(define (make-html tag ...args)
+  (define (loop attrs (key value ...args) (when (atom? key)))
+    (loop (record-updated attrs (.value key) value) args))
+  (define (loop attrs children)
+    (HtmlElement tag attrs (.flatMap children (lambda (c) (if (list? c) c (list c))))))
+  (loop (record) args))
+
+(define (write-attributes attrs)
+  (define sequence (iter (.record attrs)))
+  (.mkString
+    (map 
+      sequence
+      (lambda (entry)
+        (define key (._1 entry))
+        (define value (._2 entry))
+        $"$key=${(write (string value))}"))
+    " "))
+
+(define (render-html element (when (HtmlElement? element)))
+  (define tag (.tag element))
+  (define attrs (.attributes element))
+  (define children (map (.children element) render-html))
+  $"""<$tag ${(write-attributes attrs)}>
+  ${(.mkString children "\n")}
+</$tag>""")
+(define (render-html element) (string element))
+
+(define (html-maker tag)
+  (lambda args (make-html tag ...args)))

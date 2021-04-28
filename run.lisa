@@ -20,6 +20,20 @@
     &(input $"Serving static files in ${(.getPath path)} on port $port, enter to quit>")
     (stop-server)))
 
+(define (main ("http" ...args))
+  (import! lisa-http)
+  (import! simple-http)
+  (define path (.getAbsoluteFile (new java.io.File ".")))
+  (define route (static-file-route (.getPath path) "/"))
+  (define port
+    (match args
+        ((port) (int port))
+        (_ 5050)))
+  (lisa-http/run
+    :route (simple-http-route (.getPath path) "/")
+    :port port
+    :threaded true))
+
 (define (main ("terminal"))
   (import! lisa-http)
   (define env (.capturedEnv &#))

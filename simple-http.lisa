@@ -1,0 +1,58 @@
+(import! router)
+(import! response-maker)
+(import! helpers/assertion)
+(import! helpers/match)
+(import! static-file)
+(import! html/html)
+(import! html/tags * as h)
+(import! url)
+
+(define (try-send-dir file (when (.isDirectory file)))
+  (define title $"Directory listing for /${(.getName file)}")
+  (define files (.listFiles file))
+  (define file-links
+    (map files
+      (lambda (f)
+        (define name (.getName f))
+        (define link (encode-url name))
+        (if (.isFile f)
+          (h.a
+            :href link
+            name)
+          (h.a
+            :href $"$link/"
+            $"$name/")))))
+
+  (h.html
+    (h.head
+      (h.meta :http-equiv "Content-Type" :content "text/html; charset=utf-8")
+      (h.title title))
+    (h.body
+      (h.h1 title)
+      (h.hr
+        (h.ul
+          (map file-links h.li))))))
+
+(define (try-send-dir _)
+  '(:ignore))
+
+
+(define (simple-http-route dir prefix)
+  (define file (.getAbsoluteFile (new java.io.File dir)))
+  (assert (.isDirectory file) "Dir must be a directory.")
+  (assert (.startsWith prefix "/") "Prefix must starts with /")
+  (define prefix
+    (match prefix
+      ($"$p/" prefix)
+      (p $"$p/")))
+  (define path (.toPath file))
+  (define idx (length prefix))
+  (define (handle route context (when (.startsWith route prefix)))
+    (define fpath (decode-url (.substring route idx)))
+    (define file-path (.resolve path (path-of fpath)))
+    (define resolved-file (.toFile file-path))
+    (if (.isFile resolved-file)
+      (send-file resolved-file)
+      (try-send-dir resolved-file)))
+  (define (handle _ _) '(:ignore))
+  handle)

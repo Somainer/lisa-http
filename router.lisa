@@ -3,10 +3,13 @@
 (import! helpers/match)
 (import! response-handler)
 (import-env! io-source)
+(import! html/tag-maker)
 
 (define (make-router route-fn)
   (define (handle-body-transform body)
     (match body
+      (html (when (HtmlElement? html))
+        (render-html html))
       (json (when (or (record? json) (list? json)))
         (to-json-string json))
       (data (string data))))
