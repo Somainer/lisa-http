@@ -13,22 +13,40 @@
       (json (when (or (record? json) (list? json)))
         (to-json-string json))
       (data (string data))))
+  (define (handle-content-type body context)
+    (define content-type (match body
+      (html (when (HtmlElement? html))
+        "text/html")
+      (json (when (or (record? json) (list? json)))
+        "application/json")
+      (_ "text/plain")))
+    (|> context
+      .getResponseHeaders
+      (.add "Content-Type" content-type)))
   (define (handle-response response context)
     (match response
       ((:ignore) ()) ; Do nothing
-      ((:ok resp) (write-response context (handle-body-transform resp)))
-      ((:err exception) (write-response context (handle-body-transform exception) 500))
+      ((:ok resp) 
+        (handle-content-type resp context)
+        (write-response context (handle-body-transform resp)))
+      ((:err exception)
+        (handle-content-type exception context)
+        (write-response context (handle-body-transform exception) 500))
       (((:err code) msg) (when (number? code))
+        (handle-content-type msg context)
         (write-response context (handle-body-transform msg) code))
       (fn (when (callable? fn)) (fn context))
       (data ; assume ok.
+        (handle-content-type data context)
         (write-response context (handle-body-transform data)))))
+  (define (router 'to-string) $"Router(${route-fn})")
   (define (router context (when (has-response? context))) ())
   (define (router context)
     (define path (|> context .getRequestURI .getPath))
     ; (println! $"Path: $path resp: ${(route-fn path context)}")
     (try!
-      (handle-response (route-fn path context) context)
+      (let ((result (route-fn path context)))
+        (handle-response result context))
       (catch exception
         (handle-response (list :err (.getMessage exception)) context)))
     (if (not (has-response? context))
@@ -67,10 +85,12 @@
 
 (define (chain-routes route) route)
 (define (chain-routes route-a route-b)
-  (lambda (route context)
+  (define (router-impl route context)
     (match (route-a route context)
       ((:ignore) (route-b route context))
-      (result result))))
+      (result result)))
+  (define (router-impl ...) (panic! "Invalid arguments."))
+  router-impl)
 (define (chain-routes a b ...rest)
   (chain-routes (chain-routes a b) ...rest))
 

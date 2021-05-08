@@ -4,6 +4,10 @@
 (import! helpers/range-stream)
 (import! response-handler)
 
+(define (redirect-to path)
+  (redirect-to path :permanent))
+(define (redirect-to path :permanent) (redirect-to path 301))
+(define (redirect-to path :found) (redirect-to path 302))
 (define (redirect-to path code)
   (lambda (context)
     (->> context
@@ -13,10 +17,6 @@
         (.add "Location" path))
       (.sendResponseHeaders code (.asLong (wrap -1)))
       .close)))
-(define (redirect-to path)
-  (redirect-to path :permanent))
-(define (redirect-to path :permanent) (redirect-to path 301))
-(define (redirect-to path :found) (redirect-to path 302))
 
 (define (err code message)
   `'((:err ~code) ~message))

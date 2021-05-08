@@ -6,6 +6,7 @@ import moe.roselia.lisa.Annotation.RawLisa
 class RangeInputStream(stream: InputStream, from: Long, to: Long) extends InputStream {
   stream.skip(from)
   private var cursor = from
+  override def available(): Int = availableBytes.toInt
   def availableBytes = to - from
   
   override def read(): Int = {
@@ -37,5 +38,6 @@ PrimitiveFunction {
     WrappedScalaObject(new RangeInputStream(stream, from.toLong, to.toLong))
   case SString(str) :: Nil =>
     val buf = StandardCharsets.UTF_8.encode(str)
-    WrappedScalaObject(new ByteArrayInputStream(buf.array()))
+    val inputStream = new ByteArrayInputStream(buf.array())
+    WrappedScalaObject(new RangeInputStream(inputStream, buf.position().toLong, buf.limit().toLong))
 }

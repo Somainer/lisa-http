@@ -5,6 +5,7 @@
 (import! static-file)
 (import! parse-query)
 (import! body-reader)
+(import! html/html)
 
 (define (lisa-http ...confs)
   (define server (make-server))
@@ -38,4 +39,5 @@
     (|>
       .getAddress
       .getPort
-      &(input $"Lisa-Http is running on port ${#}, enter to stop..."))))
+      &(input $"Lisa-Http is running on port ${#}, enter to stop..."))
+      (stop-server)))

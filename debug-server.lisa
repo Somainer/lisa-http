@@ -1,0 +1,87 @@
+(import! helpers/pipe-macro)
+
+(define-macro (rewire-fn from to)
+  (define sym (gen-sym))
+  `'(group!
+      (define ~sym ~from)
+      (define ~from ())
+      (define ~from (~to ~sym))))
+
+(define-macro (rewire-lisa-http fn)
+  `'(group!
+      (~rewire-fn lisa-http ~fn)
+      (~rewire-fn make-server ~fn)))
+
+(define (clear-package-cache)
+  (define importer moe.roselia.lisa.Import.PackageImporter$/MODULE$)
+  (|> importer
+    .packageCache
+    .clear))
+
+(define (run-debug-server file)
+  (println! "Starting debug server...")
+  (define-mutable! -servers)
+  (define (register-server make)
+    (lambda confs
+      (define server (make ...confs))
+      (set! -servers (cons server -servers))
+      server))
+  (import! lisa-http)
+  (define (stop-servers)
+    (.foreach -servers stop-server))
+  (rewire-lisa-http register-server)
+  (define lisa-http/run ())
+  (define (lisa-http/run ...confs)
+    (|> (lisa-http ...confs)
+      (start-server)))
+  (define parent (.getParentFile file))
+  (define watch-service (.newWatchService java.nio.file.FileSystems/getDefault))
+  (|> parent
+    .toPath
+    (.register watch-service
+      (.toNativeArray 
+        (list
+          java.nio.file.StandardWatchEventKinds/ENTRY_MODIFY
+          java.nio.file.StandardWatchEventKinds/ENTRY_CREATE))))
+  (define-mutable! should-reload)
+  (define-mutable! should-quit)
+  (set! should-reload false)
+  (set! should-quit false)
+  (|> 
+    (new Thread
+      (lambda ()
+        (println! "Hot reload debug server created...")
+        (input "Enter to quit...")
+        (set! should-quit true)))
+    .start)
+  (define (loop ())
+    (println! "Stopping server...")
+    (stop-servers)
+    (quit 0))
+  (define (loop :reload)
+    (clear-package-cache)
+    (loop :start))
+  (define (loop :start)
+    (define status (returnable
+      (lambda (return)
+        (set! should-reload false)
+        (load! (.getPath file))
+        (while true
+          (let ((key (.poll watch-service)))
+            (define events (if (= key null) () (from-java (.pollEvents key))))
+            (if
+              (.exists events
+                &(|> #
+                    .context
+                    .toFile
+                    .getName
+                    (.endsWith ".lisa")))
+              (set! should-reload true))
+            (if (not (= null key)) (.reset key))
+            (if should-reload (return :reload))
+            (if should-quit (return))
+            (Thread/sleep (.asLong (wrap 1000))))))))
+    (if (not (nil? status))
+      (stop-servers))
+    (loop status))
+  (loop :start))

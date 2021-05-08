@@ -23,8 +23,11 @@
   main map mark meta meter
   nav noscript
   object ol optgroup option output
-  p param picture pre progress q rp rt s
-  samp script section select small source span strong
-  style sub summary sup svg table tbody td td
-  template tfoot th thead time title tr track u ul
+  p param picture pre progress
+  q rp rt
+  s samp script section select small source span strong
+  style sub summary sup svg
+  table tbody td td
+  template tfoot th thead time title tr track
+  u ul
   var video wbr)

@@ -1,3 +1,4 @@
+import scala.util.control.NonFatal
 import moe.roselia.lisa.LispExp._
 import moe.roselia.lisa.Evaluator
 
@@ -11,7 +12,7 @@ PrimitiveMacro {
     try {
       handleOrThrow(Evaluator.eval(op, env))
     } catch {
-      case ex =>
+      case NonFatal(ex) =>
         handleOrThrow(Evaluator.eval(Apply(caught, WrappedScalaObject(ex) :: Nil), env))
     } finally {
       Evaluator.eval(finale, env)
