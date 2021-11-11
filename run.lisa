@@ -30,6 +30,10 @@
     (match args
         ((port) (int port))
         (_ 5050)))
+  (define ip-address
+    (|> java.net.InetAddress/getLocalHost
+      .getHostAddress))
+  (println! $"Serving http host on ${ip-address}:$port")
   (lisa-http/run
     :route (simple-http-route (.getPath path) "/")
     :port port

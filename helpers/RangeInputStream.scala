@@ -37,7 +37,7 @@ PrimitiveFunction {
   case WrappedScalaObject(stream: InputStream) :: SInteger(from) :: SInteger(to) :: Nil =>
     WrappedScalaObject(new RangeInputStream(stream, from.toLong, to.toLong))
   case SString(str) :: Nil =>
-    val buf = StandardCharsets.UTF_8.encode(str)
-    val inputStream = new ByteArrayInputStream(buf.array())
-    WrappedScalaObject(new RangeInputStream(inputStream, buf.position().toLong, buf.limit().toLong))
+    val buf = str.getBytes(StandardCharsets.UTF_8)
+    val inputStream = new ByteArrayInputStream(buf)
+    WrappedScalaObject(new RangeInputStream(inputStream, 0L, buf.length.toLong))
 }

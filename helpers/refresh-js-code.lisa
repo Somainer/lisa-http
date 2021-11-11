@@ -1,0 +1,15 @@
+(define (refresh-js-code path)
+$""";
+(function () {
+  let version;
+  function refresh() {
+    fetch('$path').then(resp => resp.text()).then(v => {
+      if (typeof version === 'undefined') version = v;
+      else if (v != version) {
+        window.location.reload()
+      }
+    })
+  }
+  setInterval(refresh, 1000)
+})()
+""")
